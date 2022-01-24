@@ -1,0 +1,20 @@
+{
+"chat_message": [
+        "string"
+    ],
+"creative_inventory_action": [
+        "h",
+        "slot"
+    ],
+"held_item_change": [
+        "h"
+    ],
+"player_look": [
+        "f",
+        "f",
+        "?"
+    ],
+"spectate": [
+        "UUID"
+    ]
+}

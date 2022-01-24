@@ -1,0 +1,6 @@
+#!/bin/bash
+
+#iptables --flush  
+iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP
+iptables -A DOCKER-USER -p tcp --tcp-flags RST RST -j DROP
+iptables -L

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo $#
+if [ "$#" -ne 1 ];
+then    
+    echo "Usage: docker_setup <WORKDIRECTORY>"
+    exit -1
+fi
+
+Dir=$1
+apt-get update
+apt-get install -y python3 python3-pip vim python3-psutil iperf
+
+pip3 install -r $Dir/install/requirements.txt 
+
+echo "Setup Complete"

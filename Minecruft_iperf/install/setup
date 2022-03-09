@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+
+if [ "$#" -ne 1 ];
+then    
+    echo "Usage <minecruft_dir>"
+    exit -1
+fi
+
+export LC_ALL=C
+WORKDIR=$(readlink -f $1)
+SSHPORT=9001
+TORDATADIR='/tmp/tor'
+
+apt update
+apt install -y python3 python3-pip tsocks tor vim python3-psutil iperf docker docker-compose
+pip3 install -r $WORKDIR/install/requirements.txt 
+
+cp $WORKDIR/configs/tor_conf/torrc /etc/tor/torrc
+
+mkdir -p $TORDATADIR
+chown -R `whoami` $TORDATADIR
+chmod u+rwx -R $TORDATADIR
+
+#echo "Copy the Minecruft_Proxy folder to wherever you would like to install it."
+#echo "Keep in mind the copy-certs.py file must be run from the that folder (if you are the client)"
+echo "Setup Complete"

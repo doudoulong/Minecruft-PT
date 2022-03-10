@@ -1,0 +1,35 @@
+version: '2.0'
+services:
+  mserver:
+    build:
+      context: ..
+      dockerfile: ./docker/server/Dockerfile
+    ports: 
+      - "25565:25565"
+  testproxy:
+    build:
+      dockerfile: ./docker/proxy/Dockerfile
+      context: ..
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "25566:25566"
+    command: sh -c "sleep 5 && python3 /proxy/minecruft/Minecruft_Main.py proxy /proxy/configs/aes_ecb_key.bin 172.17.0.1 25565 9001 /proxy/configs/client_decoder_actions_v12.2.json /proxy/configs/client_encoder_actions_v12.2.json" 
+  iperfserver:
+    build: 
+      dockerfile: ./docker/iperf/Dockerfile
+      context: ..
+    tty: true
+    stdin_open: true 
+    network_mode: service:testproxy
+    cap_add:
+      - NET_ADMIN
+    command: sh -c "sleep 5s && echo 'listening on 9001' && iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP && iperf3 -s -p 9001 -i 0" 
+  testclient:
+    build:
+      dockerfile: ./docker/client/Dockerfile
+      context: ..
+    cap_add:
+      - NET_ADMIN
+    network_mode: host
+    command: sh -c "sleep 8s && python3 /client/minecruft/Minecruft_Main.py client /client/configs/aes_ecb_key.bin 127.0.0.1 25566 9001 /client/configs/client_encoder_actions_v12.2.json /client/configs/client_decoder_actions_v12.2.json"

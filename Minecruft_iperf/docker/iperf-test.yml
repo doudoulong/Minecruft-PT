@@ -38,7 +38,6 @@ services:
       - NET_ADMIN
     network_mode: service:testproxy
     command: sh -c "iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP && /usr/sbin/sshd -o AllowTcpForwarding=yes -h /root/.ssh/id_rsa && ip a && ssh -o StrictHostKeyChecking=no -D 0.0.0.0:9001 127.0.0.1 && tail -f /dev/null"
-    
   iperf:
     build: 
       dockerfile: ./docker/iperf/Dockerfile

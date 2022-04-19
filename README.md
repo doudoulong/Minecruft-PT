@@ -56,7 +56,7 @@ $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up mserver
 ```
 
-4. Start the server proxy docker.
+5. Start the server proxy docker.
 
 To obtain the docker gateway IP, open a new terminal and run
 ```
@@ -65,7 +65,7 @@ $ sudo docker inspect docker_default | grep "Gateway"
 
 Replace the IP address in line 19 of file "services.yml" with the output of the previous command and then save the file.
 
-5. Start the selected service docker.
+6. Start the selected service docker.
 
 Open a new terminal and run one of the following commands depending on the selected service: 
 * SOCKS
@@ -88,14 +88,12 @@ The Minecruft-PT server should be ready for use.
 ## Minecruft-PT Client Setup
 
 ### Tunneling Socks Traffic
-On client virtual machine, open Firefox(or other browser). Open broswer network settings and find proxy part.
-Set manual proxy configuration as follows:
+Start Firefox on the user-host. Go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 
 ```
 SOCKS HOST: 127.0.0.1
 Port: 9001
 ```
-And save.
-Then your broswer traffic is tunneling through Minecruft-PT.
+And save. Now your broswer traffic is tunnelled through Minecruft-PT.
 
 ### Tunnel iPerf Traffic
 The iPerf mode is mainly used for collecting latency and throughput of Minecruft-PT. To start the iperf client, open a terminal and run

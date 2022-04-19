@@ -6,7 +6,8 @@ A pluggable transport (PT) that tunnels users' traffic through Minecraft video g
 Minecruft-PT has been tested on the following systems:
 
 *Ubuntu Desktop 20.04 LTS 
-*Linux Mint 20.03 LTS.
+
+*Linux Mint "Una" 20.3 LTS (Cinnamon Edition).
 
 
 ## Software Requirements

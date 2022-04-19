@@ -3,7 +3,10 @@ A pluggable transport (PT) that tunnels users' traffic through Minecraft video g
 
 
 ## Environment
-Ubuntu Desktop 20.04 LTS (tested on a VM using VirtualBox), Linux Mint 20.03 LTS (tested on a VM using VirtualBox)
+Minecruft-PT has been tested on the following systems:
+
+*Ubuntu Desktop 20.04 LTS 
+*Linux Mint 20.03 LTS.
 
 
 ## Software Requirements
@@ -82,28 +85,25 @@ $sudo docker-compose -f iperf-test.yml up --build testproxy netcat
 The Minecruft-PT server should be ready for use.
 
 ## Minecruft-PT Client Setup
-1. Tunneling Socks Traffic
+
+### Tunneling Socks Traffic
 On client virtual machine, open Firefox(or other browser). Open broswer network settings and find proxy part.
 Set manual proxy configuration as follows:
-
+```
 SOCKS HOST: 127.0.0.1
 Port: 9001
-
+```
 And save.
 Then your broswer traffic is tunneling through Minecruft-PT.
 
-## Tunnel iPerf Traffic
-The iPerf mode is mainly used for purpuse of testing or debugging Minecruft-PT throughput. On client virtual machine, open terminal and run:
+### Tunnel iPerf Traffic
+The iPerf mode is mainly used for collecting latency and throughput of Minecruft-PT. To start the iperf client, open a terminal and run
 ```
-$iperf3 -c 127.0.0.1 -p 9001 -R -n 10K
+$ iperf3 -c 127.0.0.1 -p 9001 -R -n 10K
 ```
-Then iperf is running and going through Minecruft-PT.
 
-## Tunneling Netcat Traffic
-The iPerf mode is mainly used for purpuse of testing or debugging Minecruft-PT throughput.
-
-On client virtual machine, open terminal and run:
+### Tunnel Netcat Traffic
+The netcat mode is mainly used for testing or debugging Minecruft-PT. To start the netcat client, open a terminal and run
 ```
-$netcat 127.0.0.1 9001
+$ netcat 127.0.0.1 9001
 ```
-Then the netcat will use Minecruft to tunnel traffic. On proxy virtual machine, the terminal will show the input from client virtual machine terminal.

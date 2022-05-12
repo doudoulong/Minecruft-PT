@@ -68,7 +68,7 @@ Replace the IP address in line 19 of file "services.yml" with the output of the 
 6. Start the selected service docker.
 
 Open a new terminal and run one of the following commands depending on the selected service: 
-* SOCKS
+* Web traffic
 ```
 $sudo docker-compose -f iperf-test.yml up --build testproxy socks
 ```

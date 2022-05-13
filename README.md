@@ -86,6 +86,21 @@ $sudo docker-compose -f iperf-test.yml up --build testproxy netcat
 The Minecruft-PT server should be ready for use.
 
 ## Minecruft-PT Client Setup
+1. Clone the repository by running
+```
+$ cd ~
+$ git clone https://github.com/doudoulong/Minecruft-PT.git
+```
+
+2. Assign execute permission to scripts by running
+```
+$ cd ~/Minecruft-PT/Minecruft/
+$ chmod +x utils/iptables_prestart
+$ chmod +x utils/start_server.sh
+$ chmod +x install/setup
+$ chmod +x install/docker_setup
+$ chmod +x install/setup_bridge.sh
+``` 
 
 ### Tunneling Socks Traffic
 Start Firefox on the user-host. Go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 

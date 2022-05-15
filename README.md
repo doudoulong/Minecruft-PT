@@ -48,37 +48,31 @@ $ chmod +x install/setup_bridge.sh
 $ sudo utils/iptables_prestart
 ```
 
-4. Start the Minecraft game server docker.
-
-Open a new terminal and run
+4. Start the Minecraft game server docker by running
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up mserver
 ```
 
-5. Start the server proxy docker.
-
-To obtain the docker gateway IP, open a new terminal and run
+5. To start the server proxy docker, you need to obtain the docker gateway IP by running
 ```
 $ sudo docker inspect docker_default | grep "Gateway"
 ```
 
 Replace the IP address in line 19 (172.19.0.2) of file "services.yml" with the output of the previous command and then save the file.
 
-6. Start the selected service docker.
-
-Open a new terminal and run one of the following commands depending on the selected service: 
-* Web traffic
+6. Start the proxy docker by running one of the following commands, depending on the service: 
+* Web traffic tunneling
 ```
 $sudo docker-compose -f iperf-test.yml up --build testproxy socks
 ```
 
-* iPerf
+* iPerf traffic tunneling
 ```
 $sudo docker-compose -f iperf-test.yml up --build testproxy iperf
 ```
 
-* Netcat
+* Netcat traffic tunneling
 ```
 $sudo docker-compose -f iperf-test.yml up --build testproxy netcat
 ```

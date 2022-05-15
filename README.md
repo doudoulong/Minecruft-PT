@@ -1,5 +1,5 @@
 # Minecruft-PT
-A pluggable transport (PT) that tunnels user's traffic through Minecraft video game sessions. We would recommend users refer to for detailed information about Minecruft.
+A pluggable transport (PT) that tunnels user's traffic through Minecraft video game sessions. We would recommend users refer to ``Introduction to Minecruft''for detailed information about Minecruft.
 
 
 ## Environment

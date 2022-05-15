@@ -78,7 +78,7 @@ $sudo docker-compose -f iperf-test.yml up --build testproxy socks
 $sudo docker-compose -f iperf-test.yml up --build testproxy iperf
 ```
 
-  * Netcat
+* Netcat
 ```
 $sudo docker-compose -f iperf-test.yml up --build testproxy netcat
 ```
@@ -114,7 +114,7 @@ $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up --build testclient
 ```
 
-### Tunneling Web Traffic
+### Web Traffic Tunneling
 Start Firefox on the user-host. Go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 
 ```
 SOCKS HOST: 127.0.0.1
@@ -122,13 +122,13 @@ Port: 9001
 ```
 And save. Now your broswer traffic is tunnelled through Minecruft-PT.
 
-### Tunnel iPerf Traffic
+### iPerf Traffic Tunning 
 The iPerf mode is mainly used for collecting latency and throughput of Minecruft-PT. To start the iperf client, open a terminal and run
 ```
 $ iperf3 -c 127.0.0.1 -p 9001 -R -n 10K
 ```
 
-### Tunnel Netcat Traffic
+### Netcat Traffic Tunneling
 The netcat mode is mainly used for testing or debugging Minecruft-PT. To start the netcat client, open a terminal and run
 ```
 $ netcat 127.0.0.1 9001

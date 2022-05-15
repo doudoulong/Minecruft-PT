@@ -1,5 +1,5 @@
 # Minecruft-PT
-A pluggable transport (PT) that tunnels users' traffic through Minecraft video game sessions.
+A pluggable transport (PT) that tunnels user's traffic through Minecraft video game sessions. We would recommend users refer to for detailed information about Minecruft.
 
 
 ## Environment
@@ -63,7 +63,7 @@ To obtain the docker gateway IP, open a new terminal and run
 $ sudo docker inspect docker_default | grep "Gateway"
 ```
 
-Replace the IP address in line 19 of file "services.yml" with the output of the previous command and then save the file.
+Replace the IP address in line 19 (172.19.0.2) of file "services.yml" with the output of the previous command and then save the file.
 
 6. Start the selected service docker.
 
@@ -101,6 +101,13 @@ $ chmod +x install/setup
 $ chmod +x install/docker_setup
 $ chmod +x install/setup_bridge.sh
 ``` 
+
+3. Start the Minecruft client docker.
+Open a new terminal and run
+```
+$ cd ~/Minecruft-PT/Minecruft/docker
+$ sudo docker-compose -f iperf-test.yml up --build testclient
+```
 
 ### Tunneling Socks Traffic
 Start Firefox on the user-host. Go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 

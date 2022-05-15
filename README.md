@@ -102,14 +102,19 @@ $ chmod +x install/docker_setup
 $ chmod +x install/setup_bridge.sh
 ``` 
 
-3. Start the Minecruft client docker.
+3. Configure iptables by running
+```
+$ sudo utils/iptables_prestart
+```
+
+4. Start the Minecruft client docker.
 Open a new terminal and run
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up --build testclient
 ```
 
-### Tunneling Socks Traffic
+### Tunneling Web Traffic
 Start Firefox on the user-host. Go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 
 ```
 SOCKS HOST: 127.0.0.1

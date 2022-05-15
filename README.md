@@ -108,7 +108,7 @@ $ sudo utils/iptables_prestart
 ```
 
 4. Start the Minecruft client docker.
-Open a new terminal and run
+Replace the IP address in the last line (127.0.0.1) of file "services.yml" with the IP address of the Minecruft-PT server and then save the file. Open a new terminal and run
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up --build testclient

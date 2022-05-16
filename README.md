@@ -127,3 +127,7 @@ The netcat mode is mainly used for testing or debugging Minecruft-PT. To start t
 ```
 $ netcat 127.0.0.1 9001
 ```
+
+## Minecruft Traffic Monitoring
+We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring 
+

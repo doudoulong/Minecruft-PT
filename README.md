@@ -4,6 +4,7 @@ A pluggable transport (PT) that tunnels user's traffic through Minecraft video g
 ![image](https://user-images.githubusercontent.com/4751354/168675516-458acaf6-7fd1-4a1e-adc5-11ad2df7f785.png)
 
 <br>
+<br>
 
 ## Environment
 Minecruft-PT has been tested on the following systems:
@@ -105,8 +106,7 @@ $ sudo utils/iptables_prestart
 ```
 
 4. Start the Minecruft client docker.
-
-Replace the IP address in the last line (127.0.0.1) of file "services.yml" with the IP address of the Minecruft-PT server and save the file. Open a new terminal and run
+Replace the IP address in the last line (127.0.0.1) of file "services.yml" with the IP address of the Minecruft-PT server and then save the file. Open a new terminal and run
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up --build testclient
@@ -132,6 +132,11 @@ The netcat mode is mainly used for testing or debugging Minecruft-PT. To start t
 $ netcat 127.0.0.1 9001
 ```
 
-## Minecruft Traffic Monitoring
-We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring. You need Node.js () and npm installed to use pakkit. 
+## Minecruft Traffic Monitoring/Parsing
+We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring. You need Node.js and npm installed to use pakkit. 
+
+pakkit runs as a proxy between the client and game server. The image below shows the user interface of pakkit, where "connect port" is where the real game server is listening on, which is 25565 by default; and "listen port" is the where pakkit connects to.  You need to make sure your Minecraft game client connects to the listen port, NOT connect port. 
+
+![pakkit](https://user-images.githubusercontent.com/4751354/168687111-788b5b2e-b3d0-402b-8d38-3bb3341d34e3.jpg)
+
 

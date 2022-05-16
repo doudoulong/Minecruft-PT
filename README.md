@@ -1,6 +1,10 @@
 # Minecruft-PT
-A pluggable transport (PT) that tunnels user's traffic through Minecraft video game sessions. We would recommend users refer to ``Introduction to Minecruft''for detailed information about Minecruft.
+A pluggable transport (PT) that tunnels user's traffic through Minecraft video game sessions. We would recommend users refer to ``Introduction to Minecruft''for detailed information about Minecruft. The schematic diagram below should give you a general idea as to how Minecruft-PT works.
 
+![image](https://user-images.githubusercontent.com/4751354/168675516-458acaf6-7fd1-4a1e-adc5-11ad2df7f785.png)
+
+<br>
+<br>
 
 ## Environment
 Minecruft-PT has been tested on the following systems:
@@ -129,5 +133,5 @@ $ netcat 127.0.0.1 9001
 ```
 
 ## Minecruft Traffic Monitoring
-We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring 
+We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring. You need Node.js () and npm installed to use pakkit. 
 

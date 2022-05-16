@@ -4,7 +4,6 @@ A pluggable transport (PT) that tunnels user's traffic through Minecraft video g
 ![image](https://user-images.githubusercontent.com/4751354/168675516-458acaf6-7fd1-4a1e-adc5-11ad2df7f785.png)
 
 <br>
-<br>
 
 ## Environment
 Minecruft-PT has been tested on the following systems:
@@ -106,7 +105,8 @@ $ sudo utils/iptables_prestart
 ```
 
 4. Start the Minecruft client docker.
-Replace the IP address in the last line (127.0.0.1) of file "services.yml" with the IP address of the Minecruft-PT server and then save the file. Open a new terminal and run
+
+Replace the IP address in the last line (127.0.0.1) of file "services.yml" with the IP address of the Minecruft-PT server and save the file. Open a new terminal and run
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up --build testclient

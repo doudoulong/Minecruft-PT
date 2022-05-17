@@ -132,6 +132,12 @@ The netcat mode is mainly used for testing or debugging Minecruft-PT. To start t
 $ netcat 127.0.0.1 9001
 ```
 
+### Tor Browser Traffic Tunneling
+For Tor browser to the SOCKS proxy, add the following line to the torrc file that is located at Browser/TorBrowser/Data/Tor:
+```
+Socks5Proxy 127.0.0.1:9001
+```
+
 ## Minecruft Traffic Monitoring/Parsing
 We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring. You need Node.js and npm installed to use pakkit. 
 

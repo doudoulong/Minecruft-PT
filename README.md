@@ -83,6 +83,8 @@ $sudo docker-compose -f iperf-test.yml up --build testproxy netcat
 
 The Minecruft-PT server should be ready for use.
 
+7. Clean of Minecruft-PT
+
 ## Minecruft-PT Client Setup
 1. Clone the repository by running
 ```
@@ -143,3 +145,10 @@ pakkit runs as a proxy between the client and game server. The image below shows
 ![pakkit](https://user-images.githubusercontent.com/4751354/168687111-788b5b2e-b3d0-402b-8d38-3bb3341d34e3.jpg)
 
 
+## Clean-Shutdown of Minecruft
+Since Minecruft heavily adopts docker, a clean-shutdown is important. To gracefully stop and remove all the docker containers, open a terminal and run
+```
+$ cd ~/Minecruft-PT/Minecruft/docker
+$ sudo docker-compose -f iperf-test.yml down
+```
+This works for both server and client. 

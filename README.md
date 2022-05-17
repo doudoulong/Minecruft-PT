@@ -113,7 +113,7 @@ $ sudo docker-compose -f iperf-test.yml up --build testclient
 ```
 
 ### Web Traffic Tunneling
-Start Firefox on the user-host. Go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 
+Start Firefox, go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 
 ```
 SOCKS HOST: 127.0.0.1
 Port: 9001
@@ -121,9 +121,8 @@ Port: 9001
 And save. Now your broswer traffic is tunnelled through Minecruft-PT.
 
 ### iPerf Traffic Tunning 
-The iPerf mode is mainly used for collecting latency and throughput of Minecruft-PT. To start the iperf client, open a terminal and run
 ```
-$ iperf3 -c 127.0.0.1 -p 9001 -R -n 10K
+$sudo docker-compose -f iperf-test.yml up --build testproxy iperf
 ```
 
 ### Netcat Traffic Tunneling
@@ -131,12 +130,10 @@ The netcat mode is mainly used for testing or debugging Minecruft-PT. To start t
 ```
 $ netcat 127.0.0.1 9001
 ```
-
 ### Tor Browser Traffic Tunneling
-For Tor browser to the SOCKS proxy, add the following line to the torrc file that is located at Browser/TorBrowser/Data/Tor:
-```
-Socks5Proxy 127.0.0.1:9001
-```
+Start the Tor browser, Go to 'Settings --> Tor --> Advanced' and enter the following 
+![tor](https://user-images.githubusercontent.com/4751354/168845428-52ce8b54-bae6-4bfc-913b-508ca2a79ec5.jpg)
+
 
 ## Minecruft Traffic Monitoring/Parsing
 We recommend pakkit (https://github.com/Heath123/pakkit) for Minecruft and Minecraft traffic monitoring. You need Node.js and npm installed to use pakkit. 

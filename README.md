@@ -133,7 +133,7 @@ The netcat mode is mainly used for testing or debugging Minecruft-PT. To start t
 $ netcat 127.0.0.1 9001
 ```
 ### Tor Browser Traffic Tunneling
-Start the Tor browser, Go to 'Settings --> Tor --> Advanced' and enter the following 
+Start the Tor browser, go to 'Settings --> Tor --> Advanced' and enter the following 
 ![tor](https://user-images.githubusercontent.com/4751354/168845428-52ce8b54-bae6-4bfc-913b-508ca2a79ec5.jpg)
 
 

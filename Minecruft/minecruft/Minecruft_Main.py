@@ -16,6 +16,21 @@ Options:
 import multiprocessing
 import json
 import time
+
+# adding dependency. Due to unknown reason dependency will be missing when import.
+import sys
+import subprocess
+import pkg_resources
+
+required = {'docopt','twisted','quarry==1.9.0','pycryptodome','scapy'}
+installed = {pkg.key for pkg in pkg_resources.working_set}
+missing = required - installed
+
+if missing:
+  python = sys.executable
+  subprocess.check_call([python, '-m','pip','install',*missing],stdout=subprocess.DEVNULL)
+
+
 from docopt import docopt
 import logging
 

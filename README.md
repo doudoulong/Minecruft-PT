@@ -63,7 +63,7 @@ $ sudo docker-compose -f iperf-test.yml up mserver
 $ sudo docker inspect docker_default | grep "Gateway"
 ```
 
-Replace the IP address in line 19 (172.19.0.2) of file "services.yml" with the output of the previous command and then save the file.
+Replace the IP address in line 19 (172.19.0.2) of file "iperf-test.yml" with the output of the previous command and then save the file.
 
 6. Start the proxy docker by running one of the following commands, depending on the service: 
 * Web traffic tunneling
@@ -108,7 +108,7 @@ $ sudo utils/iptables_prestart
 ```
 
 4. Start the Minecruft client docker.
-Replace the IP address in the last line (127.0.0.1) of file "services.yml" with the IP address of the Minecruft-PT server and then save the file. Open a new terminal and run
+Replace the IP address in the last line (127.0.0.1) of file "iperf-test.yml" with the IP address of the Minecruft-PT server and then save the file. Open a new terminal and run
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up --build testclient

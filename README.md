@@ -58,9 +58,9 @@ $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f iperf-test.yml up mserver
 ```
 
-5. To start the server proxy docker, you need to obtain the docker gateway IP by running
+5. To start the server proxy docker, you need to obtain the Minecraft server docker's IP by running
 ```
-$ sudo docker inspect docker_default | grep "Gateway"
+$ sudo docker inspect docker_default | grep -A 5 "mserver" 
 ```
 
 Replace the IP address in line 19 (172.19.0.2) of file "iperf-test.yml" with the output of the previous command and then save the file.
@@ -83,7 +83,6 @@ $sudo docker-compose -f iperf-test.yml up --build testproxy netcat
 
 The Minecruft-PT server should be ready for use.
 
-7. Clean of Minecruft-PT
 
 ## Minecruft-PT Client Setup
 1. Clone the repository by running

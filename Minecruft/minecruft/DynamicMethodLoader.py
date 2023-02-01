@@ -7,6 +7,7 @@ import json
 import struct 
 import random
 from Crypto.Cipher import AES
+import hashlib
 import MinecraftClientEncoder
 
 class ByteChopper(bytearray):
@@ -33,6 +34,13 @@ def pack_uuid(packer):
         return packer.pack_uuid(tmp_data)
     return ephem
 
+def pack_vint_bit(packer): 
+    def ephem(data):
+        #remove this later 
+        num_mobs = random.randint(0,1)
+        return packer.pack_varint(num_mobs) 
+    return ephem
+
 def pack_vint(packer): 
     def ephem(data):
         #remove this later 
@@ -47,12 +55,14 @@ def pack_string(packer):
         return packer.pack_string(data)
     return ephem
  
-def encode_action(self, packer, outgoing_encode_buffer, fmt):
+def encode_action(self, packer, outgoing_encode_buffer, fmt, name, pack_enabled=True):
     """
     Self expects the type to be a Minecraft Encoder (either Client or Proxy).
     """
     type_dict = {"slot": packer.pack_slot,
-                "varint": pack_vint(packer), 
+                "varint": pack_vint(packer),
+                "varint_id": pack_vint(packer), 
+                "varint_bit": pack_vint_bit(packer), 
                 "?": pack_bool(packer), 
                 "uuid": packer.pack_uuid, 
                 "position": packer.pack_position, 
@@ -60,7 +70,9 @@ def encode_action(self, packer, outgoing_encode_buffer, fmt):
                 "chat": packer.pack_chat}
 
     size_dict = {"slot": 0,
-                "varint": 0, 
+                "varint": 0,
+                "varint_id": 0,
+                "varint_bit": 0,
                 "?": 0, 
                 "uuid": 16, 
                 "position": 0, #can be 8, right now send random data
@@ -76,14 +88,19 @@ def encode_action(self, packer, outgoing_encode_buffer, fmt):
         
     retstr = b""
     #This loop could be problematic
-    outlen = len(outgoing_encode_buffer)
     check_buff(self.forwarding_packet_queue, outgoing_encode_buffer) 
 
+    outlen = len(outgoing_encode_buffer)
+    #if name == "player_position": #Fill buffer with random data
+    #    outlen = 0 
+    #    outgoing_encode_buffer = bytearray(b"".join([os.urandom(num_bytes_space-outlen), outgoing_encode_buffer]))
+    #el
     if num_bytes_space > outlen and outlen != 0: 
 #        self.logger.warning(outgoing_encode_buffer)
         outgoing_encode_buffer = bytearray(b"".join([outgoing_encode_buffer, os.urandom(num_bytes_space-outlen)]))
 #        self.logger.warning(outgoing_encode_buffer)
 
+    outlen = len(outgoing_encode_buffer)
     if outlen: 
     #Update Byte Chopper to chop bits and keep track of bits
         if self.id == 0: 
@@ -131,7 +148,10 @@ def encode_action(self, packer, outgoing_encode_buffer, fmt):
                     x_lsb = x[:-3] + tmp[0:3]
                     y_lsb = y[:-3]  + tmp[3:6] 
                     z_lsb = z[:-3] + tmp[6:] 
+                    if name == "player_position_and_look": 
+                        self.player.update_position(struct.unpack(">ddd", x_lsb + y_lsb + z_lsb))
                     buff_packer.append(x_lsb+y_lsb+z_lsb)
+
                 elif f == "f":
                     tmp = consumed_bytes.chop(3)
                     tmp =   b"\x43" + tmp[:] 
@@ -168,6 +188,15 @@ def unpack_slot_item(unpacker):
         return b""
     return ephem
 
+def unpack_varint_id_to_bytes(unpacker): 
+    def ephem():
+        vint = unpacker.unpack_varint() 
+        #print(vint)
+        #change this later to allow other varint length encodings
+        #return vint.to_bytes(1, "little")
+        return vint
+    return ephem
+
 def unpack_varint_to_bytes(unpacker): 
     def ephem(): 
         vint = unpacker.unpack_varint() 
@@ -197,7 +226,9 @@ def unpack_position(unpacker):
 
 def decode_action(self, unpacker, incoming_decode_buffer, fmt): 
     type_dict = {"slot": unpack_slot_item(unpacker),
-                "varint": unpack_varint_to_bytes(unpacker), 
+                "varint": unpack_varint_to_bytes(unpacker),  
+                "varint_id": unpack_varint_id_to_bytes(unpacker),  
+                "varint_bit": unpack_varint_to_bytes(unpacker),  
                 "?": unpack_bool(unpacker), 
                 "uuid": unpack_uuid(unpacker), 
                 "position": unpack_position(unpacker)}
@@ -212,9 +243,10 @@ def decode_action(self, unpacker, incoming_decode_buffer, fmt):
             #self.logger.warning(tmp)
             item = unpacker.pack_uuid(tmp)
             #self.logger.warning(item)
-        elif f == "varint" and isinstance(self, MinecraftClientEncoder.MinecraftClientEncoder):
-            tmp = unpacker.unpack_varint()
-            if tmp in self.player_vints: 
+        elif f == "varint_id":
+            tmp = type_dict[f]()
+            #self.logger.warn(f"{tmp}")
+            if tmp in self.player_vints or tmp < 30000 or tmp > 30200:
                 buff_unpacker = []
                 break
         elif f == "string":
@@ -257,13 +289,18 @@ def create_encoder_function(cl, name, fmt):
     """
     Currently for special minecraft types, we will assume no bytes of data can be packed.  
     """
-    def encoder_template_function(self):
+    def encoder_template_function(self, pack_on=True):
         #print(name)
-            buff, out = encode_action(self, self.buff_type, self.outgoing_encode_buffer, fmt)
-            self.outgoing_encode_buffer = buff
-            if out != b"":
-                #print("Sending", out) 
-                self.send_packet(name, out)
+        sent_data = True
+        buff, out = encode_action(self, self.buff_type, self.outgoing_encode_buffer, fmt, name, pack_enabled=pack_on)
+        self.outgoing_encode_buffer = buff
+        if out != b"":
+            #print("Sending", out) 
+            self.send_packet(name, out)
+        else: 
+            sent_data = False
+        return sent_data
+
     setattr(cl, "encode_" + name, encoder_template_function)
 
 def update_incoming_buffer(encoder, encoder_queue, buff):
@@ -272,10 +309,21 @@ def update_incoming_buffer(encoder, encoder_queue, buff):
     #check counter
     blen = 0
     offset = struct.calcsize("H")
+    offset += struct.calcsize("<10s")
 
     if len(encoder.incoming_decode_buffer) >= offset: 
         tmp = struct.unpack_from("H", encoder.incoming_decode_buffer)
-        blen = tmp[0]*AES.block_size
+
+        tmp_hash = struct.unpack_from("<10s", encoder.incoming_decode_buffer[2:])[0]
+        #encoder.logger.warn(f'{tmp_hash} {hashlib.sha1(tmp[0].to_bytes(4, "little")).digest()[0]}') 
+        if tmp_hash == hashlib.sha1(tmp[0].to_bytes(4, 'little')).digest()[:10]:
+            #encoder.logger.warn('Made it') 
+        #    pass
+            blen = tmp[0]*AES.block_size+20
+        else:
+            #encoder.logger.warn('popping') 
+            encoder.incoming_decode_buffer = bytearray()
+
 
     excess = bytearray() 
     buff = bytearray(buff)
@@ -293,14 +341,16 @@ def check_buff(fqueue, buff):
     a full TCP packet has been transmitted to the client. When a full TCP packet is transmitted,
     it signals the Minecruft client with an encode_enemy_look packet.
     """
+    #logging.warning("Bytes left: " + str(len(buff)))
     if not fqueue.empty() and len(buff) == 0:
         data = fqueue.get()
         if data != None:
-            dlen = int(len(data)/AES.block_size) 
-            prefix = struct.pack("H", dlen)
+            logging.info("Refilling buffer")
+            dlen = int((len(data)-20)/AES.block_size) 
+            dhash = hashlib.sha1(dlen.to_bytes(4, 'little'))
+            prefix = struct.pack("H", dlen) + struct.pack("<10s", dhash.digest())
             tmp = b''.join([prefix, data])
             buff.extend(bytearray(tmp))
-
     return buff
 
 #Make sure dynamic creation will correctly overload functions
@@ -311,8 +361,8 @@ def create_decoder_function(cl, prefix, name, fmt, mode):
         raise ValueError("Bridge Mode requires upstream_ or downstream_ in packet handler names")
 
     def decoder_template_function(self, buff):
-        #self.logger.warning("decoding " + name)
-        if self.id == 0: 
+        #self.logger.info("decoding " + name)
+        if self.id == 0 and self.spawned == True: #Spawned checks if the protocol is in play mode after the server sends a position_and_look packet to the client
             """Only decoders with id 0 can add to the queue"""
             buff, out = decode_action(self, buff, self.incoming_decode_buffer, fmt)
             out = out.read()
@@ -328,6 +378,7 @@ def create_decoder_function(cl, prefix, name, fmt, mode):
         else: 
             buff.read()
     #print("".join(["packet_", prefix,  name]))
+    #if name != "player_position": 
     setattr(cl, "packet_" + prefix  + name, decoder_template_function)
 
 def create_dropper_function(cl, prefix, name, fmt, mode):
@@ -340,8 +391,8 @@ def create_dropper_function(cl, prefix, name, fmt, mode):
 
     print("dropping" + name)
     def decoder_template_function(self, buff):
-        self.logger.warning("dropping" + name)
-        self.logger.warning(buff.read())
+        self.logger.info("dropping" + name)
+        self.logger.info(buff.read())
 
     setattr(cl, "packet_" + prefix  + name, decoder_template_function)
 

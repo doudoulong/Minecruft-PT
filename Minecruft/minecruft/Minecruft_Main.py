@@ -2,37 +2,26 @@
 """
 Usage:
     Minecruft_Main.py client <aes_keyfile> <dest_ip> <dest_port>
-                      <fwd_ports> <encoder_actions_file> <decoder_actions_file> [options]
+                      <fwd_ports> <encoder_actions_file> <decoder_actions_file> <hmm_file>[options]
     Minecruft_Main.py proxy <aes_keyfile> <dest_ip> <dest_port>
                       <fwd_ports>  <encoder_actions_file>
-                      <decoder_actions_file> [options] 
+                      <decoder_actions_file> <hmm_file>[options]
+
+    Minecruft_Main.py <config>
 
 Options:
     -h --help                  Show help message
     --proxy_port <proxy_port>  Proxy Listen Address [default: 25566]
     -t --test                  Send test message through Minecruft instead of TCP packets
+    --encoder_weights_file <weights>    Encoder Weights
 """
 
 import multiprocessing
 import json
 import time
-
-# adding dependency. Due to unknown reason dependency will be missing when import.
-import sys
-import subprocess
-import pkg_resources
-
-required = {'docopt','twisted','quarry==1.9.0','pycryptodome','scapy'}
-installed = {pkg.key for pkg in pkg_resources.working_set}
-missing = required - installed
-
-if missing:
-  python = sys.executable
-  subprocess.check_call([python, '-m','pip','install',*missing],stdout=subprocess.DEVNULL)
-
-
 from docopt import docopt
 import logging
+import hashlib
 
 #Minecraft Bot Libraries - Twisted does the event handling
 from twisted.internet import reactor, defer
@@ -57,10 +46,34 @@ def filter_packets(incoming_tcp_q, duplicate_packets):
         incoming_tcp_q.
         """
         data = packet['TCP']
-        incoming_tcp_q.put(data)
+        if not data in duplicate_packets:
+            incoming_tcp_q.put(data)
+            duplicate_packets.append(data)
+        else:
+            duplicate_packets.remove(data)
     return send_filtered_packets
 
 def receive_tcp_data(tcp_port, direction, incoming_tcp_q):
+    """
+    This is a function for sending packets from the host.
+
+    Sniffs all packets of localhost that have ports with the value tcp_port traveling
+    either from src or dst using the direction variable.
+
+    direction: src or dst
+    tcp_port: String resembling TCP ports such as 9000, 20, 80
+    incoming_tcp_q: Queue for saving incoming packets
+    """
+    port_str_lst = []
+    for port in tcp_port.split(','):
+        port_str_lst.append('tcp ' + direction + ' port ' +  port)
+    port_str = ' or '.join(port_str_lst)
+
+    duplicate_packets = []
+    filt = "host 127.0.0.1 and ( " + port_str + " )"
+    sniff(filter=filt, prn=filter_packets(incoming_tcp_q, duplicate_packets), iface="lo")
+ 
+def breceive_tcp_data(tcp_port, direction, incoming_tcp_q):
     """
     This is a function for sending packets from the host.
 
@@ -75,10 +88,10 @@ def receive_tcp_data(tcp_port, direction, incoming_tcp_q):
     #for port in tcp_port.split(','):
     #    port_str_lst.append('tcp ' + direction + ' port ' +  port)
     #port_str = ' or '.join(port_str_lst)
-
-    #duplicate_packets = []
-    #filt = "host 127.0.0.1 and ( " + port_str + " )"
-    #sniff(filter=filt, prn=filter_packets(incoming_tcp_q, duplicate_packets), iface="lo")
+#
+#    duplicate_packets = []
+#    filt = "host 127.0.0.1 and ( " + port_str + " )"
+#    sniff(filter=filt, prn=filter_packets(incoming_tcp_q, duplicate_packets), iface="lo")
     sock = L3RawSocket(iface="lo")
     tcp_port = int(tcp_port)
     duplicate_packets = []
@@ -92,11 +105,16 @@ def receive_tcp_data(tcp_port, direction, incoming_tcp_q):
             elif direction == "src": 
                 test = (data.sport == tcp_port) 
         if test:
-            stripped_pack = TCP(ack=data.ack, seq=data.seq)/data.payload
-            logging.warning(bytes(stripped_pack))
+            stripped_pack = TCP(ack=data.ack, seq=data.seq, flags=data.flags)/data.payload
+            #logging.warning(bytes(stripped_pack))
             if not hash(bytes(stripped_pack)) in duplicate_packets:
-                #if not incoming_tcp_q.full(): 
-                incoming_tcp_q.put(data)
+                if not incoming_tcp_q.full(): 
+                    #logging.warning("Sending: ")
+                    #logging.warning(data.summary())
+                    logging.info("Adding to queue " + data.summary())
+                    logging.info(f"Ack {data.ack}, Seq {data.seq}, flags {data.flags}, payload length {len(data.payload)},\n options {data.options}")
+                    incoming_tcp_q.put(data)
+                    logging.info("Queue has " + str(incoming_tcp_q.qsize()))
                 duplicate_packets.append(hash(bytes(stripped_pack)))
             elif len(duplicate_packets) > 100:
                 duplicate_packets.pop(0)
@@ -113,6 +131,9 @@ def encrypt_tcp_data(incoming_tcp_q, encrypt_tcp_q, direction, key):
             raw_data = incoming_tcp_q.get()
             padded_block = pad(bytes(raw_data), AES.block_size)
             encrypt_blocks = encrypt_load(padded_block, key)
+            block_hash = hashlib.sha1(encrypt_blocks)
+            #logging.warning(block_hash.digest())
+            encrypt_blocks = encrypt_blocks + block_hash.digest()
             encrypt_tcp_q.put(bytearray(encrypt_blocks))
         
 def sim_tcp_data(incoming_tcp_q, encrypt_tcp_q, direction, key): 
@@ -130,22 +151,31 @@ def decrypt_enc_data(decrypt_tcp_q, response_q, key):
     while True:
         enc_pack = decrypt_tcp_q.get()
         if enc_pack != None and len(enc_pack) > 0:
-            decrypted_pack = decrypt_load(enc_pack, key)
-            unpadded_pack = unpad(decrypted_pack, AES.block_size)
-            response_q.put(bytes(unpadded_pack))
+            
+            cmp_hash = enc_pack[-20:]  
+            enc_pack = enc_pack[:-20]
+            #logging.warning(cmp_hash)
+            if cmp_hash == hashlib.sha1(enc_pack).digest(): 
+                decrypted_pack = decrypt_load(enc_pack, key)
+                unpadded_pack = unpad(decrypted_pack, AES.block_size)
+                response_q.put(bytes(unpadded_pack))
+            #except ValueError as e:
+            #    logging.warn(f"Error {e}")
+            #    pass
 
 @defer.inlineCallbacks #Needed due to twisted's event handling
-def runargs(encoder_actions, decoder_actions, args, encrypt_tcp_q, decrypt_tcp_q):
+def runargs(encoder_actions, decoder_actions, args, encrypt_tcp_q, decrypt_tcp_q, encoder_weights, hmm_file):
     """
     Creates a Minecraft Client Bot, and connects to the Minecraft proxy.
     This assumes that the Minecraft Proxy is already running on another machine.
     """
     profile = yield ProfileCLI.make_profile(args)
-    factory = MinecraftEncoderFactory(encoder_actions, decoder_actions, profile, encrypt_tcp_q, decrypt_tcp_q)
+    factory = MinecraftEncoderFactory(encoder_actions, decoder_actions, profile, encrypt_tcp_q, decrypt_tcp_q, encoder_weights, hmm_file)
     factory.connect(args.host, args.port)
 
 def client_forward_packet(encrypt_tcp_q, decrypt_tcp_q, encoder_actions, 
-                          decoder_actions, forward_addr, proxy_port):
+                          decoder_actions, forward_addr, proxy_port, 
+                          encoder_weights, hmm_file):
     """
     Starts twisted's event listener for sending and recieving minecraft packets,
     and sets up the client bot to connect to the proper host machine using the
@@ -160,12 +190,12 @@ def client_forward_packet(encrypt_tcp_q, decrypt_tcp_q, encoder_actions,
     #Later take input and/or pick from a name in a database
     myarr = [forward_addr, "-p", str(proxy_port), "--offline-name", "Bot"]
     args = parser.parse_args(myarr)
-    runargs(encoder_actions, decoder_actions, args, encrypt_tcp_q, decrypt_tcp_q)
+    runargs(encoder_actions, decoder_actions, args, encrypt_tcp_q, decrypt_tcp_q, encoder_weights, hmm_file)
     reactor.run() #pylint: disable=no-member
 
 def proxy_forward_packet(encrypt_tcp_q, decrypt_tcp_q, downstream_encoder_actions, 
                          upstream_decoder_actions, minecraft_server_addr, minecraft_server_port,
-                         listen_addr, listen_port):
+                         listen_addr, listen_port, encoder_weights, hmm_file):
     """
     Starts twisted's event listener for sending and recieving minecraft packets,
     and sets up the proxy server which first connects to a Minecraft server set in offline
@@ -174,7 +204,7 @@ def proxy_forward_packet(encrypt_tcp_q, decrypt_tcp_q, downstream_encoder_action
     packets) and the decrypt_tcp_q (for receiving encrypted packets) to the
     minecraftProxyEncoder object.
     """
-    factory = MinecraftProxyFactory(encoder_actions, decoder_actions, encrypt_tcp_q, decrypt_tcp_q)
+    factory = MinecraftProxyFactory(encoder_actions, decoder_actions, encrypt_tcp_q, decrypt_tcp_q, encoder_weights, hmm_file)
     factory.online_mode = False
     factory.force_protocol_version = 340
     factory.connect_host = minecraft_server_addr
@@ -219,25 +249,43 @@ def decrypt_load(cipher_str, key):
 
 if __name__ == '__main__':
     #Parse input arguments, require mode, dest_ip, dest_port, and fwd_ports.
+    #logging.basicConfig(level=30, format="%(message)s")
     pargs = docopt(__doc__) 
     print(pargs)
 
+    if "<config>" in pargs: 
+        conffile = pargs["<config>"]
+        with open(conffile, "r") as conffp:
+            pargs = json.load(conffp)
+
+    hmm_file = pargs["<hmm_file>"]
     #Initialize and set important vaiables
     ports = pargs["<fwd_ports>"]
     dest_port = int(pargs["<dest_port>"])
     dest_ip = pargs["<dest_ip>"]
 
-    encoder_actions =  pargs["<encoder_actions_file>"]
-    decoder_actions =  pargs["<decoder_actions_file>"]
+    encoder_actions_file =  pargs["<encoder_actions_file>"]
+    decoder_actions_file =  pargs["<decoder_actions_file>"]
+
+    encoder_weights_file =  pargs["--encoder_weights_file"]
+
     aes_keyfile = pargs["<aes_keyfile>"] 
     with open(aes_keyfile, "rb") as f: 
         aes_key =  f.read() 
 
-    with open(decoder_actions) as f: 
+    decoder_actions = {}
+    encoder_actions = {}
+
+    with open(decoder_actions_file) as f: 
         decoder_actions =  json.load(f)
 
-    with open(encoder_actions) as f: 
+    with open(encoder_actions_file) as f: 
         encoder_actions =  json.load(f)
+
+    encoder_weights = None
+    if encoder_weights_file:
+        with open(encoder_weights_file) as f: 
+            encoder_weights = json.load(f)
 
     #These queues are used throughout the project
     sniffed_packets_queue = multiprocessing.Queue()
@@ -256,13 +304,13 @@ if __name__ == '__main__':
         direction = "dst"
         forward_packet = client_forward_packet
         fte_func_args = (encrypt_queue, decrypt_queue, encoder_actions, 
-                         decoder_actions, dest_ip, dest_port)
+                         decoder_actions, dest_ip, dest_port, encoder_weights, hmm_file)
     elif pargs["proxy"]:
         direction = "src"
         proxy_port = int(pargs["--proxy_port"])
         forward_packet = proxy_forward_packet
         fte_func_args = (encrypt_queue, decrypt_queue, encoder_actions, decoder_actions,
-                         dest_ip, dest_port, "0.0.0.0", proxy_port) 
+                         dest_ip, dest_port, "0.0.0.0", proxy_port, encoder_weights, hmm_file) 
     else:
         exit()
 

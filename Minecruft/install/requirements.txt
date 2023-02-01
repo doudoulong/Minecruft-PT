@@ -1,7 +1,8 @@
 ###### Python Dependencies for Minecruft ######
 scapy
 pycryptodome
-twisted == 21.7.0
-quarry
+twisted >= 21.7.0
+quarry >= 1.9.0
 docopt
-
+graphviz
+numpy

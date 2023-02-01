@@ -21,12 +21,13 @@ cd minecraft_server
 curl -o BuildTools.jar https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar 
 
 git config --global --unset core.autocrlf
-java -Xmx2048M -jar BuildTools.jar --rev 1.12.2
+java -Xmx8G -jar BuildTools.jar --rev 1.12.2
 
 mv spigot*.jar spigot.jar
 
 cp $HomeDir/configs/minecraft_server_conf/eula.txt .
 cp $HomeDir/configs/minecraft_server_conf/server.properties .
+
 cp $HomeDir/utils/start_server.sh .
 
 #nohup ./start_server.sh  &

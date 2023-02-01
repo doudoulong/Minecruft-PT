@@ -1,0 +1,72 @@
+Important Links: 
+
+Minecraft Networking Protocol (for version 1.12.2): https://wiki.vg/index.php?title=Protocol&oldid=14204
+
+Minecraft Bot and Proxy Library: https://github.com/barneygale/quarry/tree/master/quarry/net
+
+Quarry Documentation: https://buildmedia.readthedocs.org/media/pdf/quarry/stable/quarry.pdf
+
+Minecraft Data viewing tool: https://minecraft-data.prismarine.js.org/?d=protocol
+
+Python minecraft data repository:  https://github.com/PrismarineJS/minecraft-data
+*****************************************************************
+Code Files 
+
+minecruft/MinecraftClientEncoder.py - receives Minecraft Server packets from Minecraft_Proxy.  Sends Minecraft Client Packets to Minecraft Proxy (which forwards them to server). 
+
+minecruft/MinecraftProxyEncoder.py - receives Minecraft Server Packets (Downstream) and Minecraft Client (Upstream) packets and forwards them to the Client (downstream.send()) or the server (upstream.send()).
+
+minecruft/DynamicMethodEncoder - Handles buffer operations 
+
+minecruft/MinecraftPlayerState - 
+*****************************************************************
+NOTES about Quarry, MinecraftClientEncoder, and MinecraftProxyEncoder
+
+Quarry already defines functions for receiving every minecraft packet type, and registers events for them when a user overrides these functions. 
+
+For example, look at the Minecraft Networking Protocol at the use entity packet. If you wanted to print "hello world" every time one of these packets was sent you could overwrite the function 
+    packet_upstream_use_entity) 
+within the MinecraftProxyEncoder.py file within the MinecraftBridge class. This would be the resulting code: 
+
+packet_upstream_use_entity(self, buff): 
+    self.logger.info("hello world")
+
+Quarry automatically registers any packet_ function to be handled as an event. So you don't have to worry about adding that functionality. 
+
+If you also wanted to forward the received packet to the minecraft server, you would also add: 
+
+packet_upstream_use_entity(self, buff): 
+    self.logger.info("hello world")
+    self.upstream.send_packet("use_entity", buff.read())
+
+Look into Quarry's documentation about it's buffer class to learn more (it's based on structs in python). Also look into Minecraft's data types that are used. 
+
+#For packets that end with minecraft NBT metadata, put the byte value 255 to signal the end of the metadata, otherwise the packet will be malformed and the minecraft server will not accept it.  
+
+****************************************************************
+Functions to Examine/ Know in MinecraftClientEncoder.py
+In the MinecraftClientEncoder Class: 
+    get_byte_from_buff 
+    check_buff
+    encode #any new encode_packet fuction should be called within the if statement checking the packet_queue and buffer in this function
+    encode_inventory_action
+    encode_player_look
+    update_incoming_buffer
+    packet_entity_head_look
+    packet_enitity_look
+    packet_player_position_and_look #This is where the encode function is registered to be called every 1/20 of a second (or one tick in Minecraft). 
+
+Functions to Examine/ Know in MinecraftProxyEncoder.py
+In the MinecraftProxyBridge class: 
+    encode 
+    encode_enemy_head_look
+    encode_enemy_look
+    packet_upstream_creative_inventory_action
+    packet_upstream_player_look 
+    packet_downstream_player_position_and_look #This is where the encode function is registered to be called every 1/20 of a second (or one tick in Minecraft).
+     
+
+**************************************************************
+Note how two queues and two buffers are used for reading packets.One queue is read into a buffer and then bytes from the buffer are sent accross the minecraft session. On the other end, that encoded packet needs to be received, a byte read from it and stored into a buffer, and then have the buffer stored into the other queue. To fully see this, note the interaction of encode_inventory_action (in MinecraftClientEncoder) and packet_upstream_creative_inventory action (in MinecarftProxyEncoder). 
+
+

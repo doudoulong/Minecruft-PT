@@ -9,6 +9,8 @@ from quarry.types import uuid
 from Crypto.Cipher import AES
 from DynamicMethodLoader import create_decoder_function, create_encoder_function, create_dropper_function
 from MinecraftPlayerState import MinecraftPlayer
+from ActionModel import HMMActionModel, RandomActionModel, WeightedRandomActionModel
+from quarry.data import packets
 
 #Development notes:
 #Currently mob spawning is handled by the proxy, but other mob logic is not
@@ -49,11 +51,10 @@ class MinecraftProxyBridge(Bridge):
     upstream_factory_class = UpstreamEncoderFactory
 
     def __init__(self, downstream_factory, downstream):
-        super().__init__(downstream_factory, downstream)
         self.ticks_count = 0
         self.clients_and_positions = []
         self.player = MinecraftPlayer()
-
+        self.spawned = False
         self.outgoing_encode_buffer = bytearray()
         self.incoming_decode_buffer = bytearray()
 
@@ -67,66 +68,36 @@ class MinecraftProxyBridge(Bridge):
         self.incoming_buffer_len = 0
         self.forwarding_packet_queue = downstream_factory.forwarding_packet_queue
         self.id = downstream_factory.assign_id()
-        
-        #We will need one for each client
-        #self.client_bound_buff = bytearray() #going out to client
-        #self.incoming_decode_buff = bytearray() #coming from client
+        self.action_model = None
 
-    def get_byte_from_buff(self, buff):
-        """
-        Right now returns 256 for no bytes in buff. Later change to None
-        to be more Pythonic.
-        """
-        buff_byte = 256
-        if buff:
-            buff_byte = buff.pop(0)
-        return buff_byte
-
-    def send_packet(self, name, buff): 
-        self.downstream.send_packet(name, buff)
-
-    def get_bytes_from_buff(self, buff, num_bytes):
-        """
-        Read num_bytes from a buffer. Returns a list of bytes. 
-        """
-        buff_bytes = []
-        for num in range(0, num_bytes):
-            buff_byte = self.get_byte_from_buff(buff)
-            buff_bytes.append(buff_byte)
-        return buff_bytes
+        super().__init__(downstream_factory, downstream)
+                #self.logger.warning(actions)
 
     def encode(self):
         """
         This is the main encode function that encodes packet bytes as
         minecraft movements. 
         """
-        if not self.downstream_factory.forwarding_packet_queue.empty() or len(self.outgoing_encode_buffer) > 0:
+        if self.action_model is not None and self.spawned and (not self.downstream_factory.forwarding_packet_queue.empty() or len(self.outgoing_encode_buffer) > 0):
+            self.action_model.next_actions(500)
+            
             #if len(self.outgoing_encode_buffer) > 0:
-            for i in range(500): 
+            #for i in range(100): #hb 1000 #mb 100 #lb = 10 
                 #self.encode_resource_pack_send()
-                self.encode_entity_look()
+            #    self.encode_entity_look()
                 #self.encode_entity_relative_move()
-                self.encode_entity_head_look()
-                self.encode_spawn_experience_orb()
+            #    self.encode_entity_head_look()
+            #    self.encode_spawn_experience_orb()
                 #self.encode_remove_entity_effect()
                 #for i in range (self.first_enemy_id, self.first_enemy_id + self.mobs_per_client):
                     #self.encode_enemy_head_look(i)
                     #TODO ADD ENCODER FUNCTIONS HERE
-            self.ticks_count += 1
+            #self.ticks_count += 1
             #if(self.ticks_count > 20): 
             #    self.ticks_count = 0
             #    self.encode_chat_message()
             #self.outgoing_encode_buffer = self.check_buff(self.outgoing_encode_buffer)
 
-
-    #def encode_enemy_head_look(self, enemy_id):
-    #    """
-    #    Read a byte from client_bound_buff and send in entity head 
-    #    look packet. 
-    #    """
-    #    yaw = self.get_byte_from_buff(self.outgoing_encode_buffer)
-    #    if(yaw != 256):
-    #        self.downstream.send_packet("entity_head_look", self.downstream.buff_type.pack_varint(enemy_id), self.downstream.buff_type.pack("B", yaw ))
 
     def gen_rand(self, bound):
         """
@@ -134,16 +105,6 @@ class MinecraftProxyBridge(Bridge):
         """
         rand_gen = random.SystemRandom()
         return rand_gen.randint(0, bound)
-
-    #def encode_enemy_look(self):
-    #    """
-    #    Encode a byte into an entity look packet and then forward to
-    #    Upstream Client connection.
-    #    """
-    #    mid = self.first_enemy_id
-    #    yaw = self.gen_rand(255)
-    #    val = self.gen_rand(255)
-    #    self.downstream.send_packet("entity_look", self.downstream.buff_type.pack_varint(mid), self.downstream.buff_type.pack("BB?", yaw, val, True ))
 
     def spawn_mobs(self, player_position):
         """
@@ -177,62 +138,17 @@ class MinecraftProxyBridge(Bridge):
         #self.first_enemy_id = self.first_enemy_id + self.mobs_per_client
 
 #--------------------------------------------------------------------
-
-    def packet_upstream_creative_inventory_action(self, buff):
-        buff.save()
-        buff.unpack("h")
-        slot_num = buff.unpack_slot()
-        item_num = slot_num["item"]
-        if(item_num != None and item_num < 256):
-            self.incoming_decode_buff.append(item_num)
-
-        buff.restore()
-        self.upstream.send_packet("creative_inventory_action", buff.read())
-    
-#    def packet_upstream_chat_message(self, buff): 
-#        buff.save()
-#        msg = buff.unpack_string()
-#        for b in msg:
-#            self.incoming_decode_buff.append(int(b, 16))
-#        buff.restore()
-#        self.upstream.send_packet("chat_message", buff.read())
-
-    #When the player sends just a look command, that means the packet
-    #is finished
-#    def packet_upstream_player_look(self, buff):
-#        buff.save()
-#        if(self.update_incoming_buffer(self.upstream)):
-#            self.downstream_factory.receiving_packet_queue.put(None)
-#        buff.restore()
-#        self.upstream.send_packet("player_look", buff.read())
+    def send_packet(self, name, buff): 
+        """
+        This is an overloaded function used by Dynamic Method loader. 
+        It is used to maintain consistency with the Minecraft Client Encoder. 
+        """
+        self.downstream.send_packet(name, buff)
 
     def packet_upstream_player_position(self, buff):
         buff.save()
         buff.restore()
         self.upstream.send_packet("player_position", buff.read())
-
-#    def packet_upstream_player_position_and_look(self, buff):
-#        buff.save()
-#
-#        pos_x = buff.unpack("d")
-#        buff.unpack("d")
-#        pox_z = buff.unpack("d")
-
-        #pos_x = self.pos_look[0] + x_offset/128.0 - 1.0
-        #pos_y = self.pos_look[1]
-        #pos_z = self.pos_look[2] + z_offset/128.0 - 1.0
-
-#        yaw = int(buff.unpack("f"))
-#        pitch = int(buff.unpack("f"))
-
-        #if yaw < 256 and yaw > 0:
-            #self.incoming_decode_buff.append(yaw)
-
-        #if pitch < 256 and pitch > 0:
-            #self.incoming_decode_buff.append(pitch)
-
-#        buff.restore()
-#        self.upstream.send_packet("player_position_and_look", buff.read())
 
     def packet_downstream_entity_head_look(self, buff):
         buff.discard()
@@ -246,7 +162,8 @@ class MinecraftProxyBridge(Bridge):
         buff.save()
         pos = buff.unpack("ddd")
         self.player.update_position(pos)
-        self.downstream.ticker.interval = 1.0/80 #This could be adjusted 
+        self.spawned = True
+        self.downstream.ticker.interval = 1.0/1000 #This could be adjusted 
         self.downstream.ticker.add_loop(1, self.encode)
         self.clients_and_positions.append((self.downstream, pos)) #Remove? 
         self.spawn_mobs(pos)
@@ -260,6 +177,24 @@ class MinecraftProxyBridge(Bridge):
         #    self.enable_fast_forwarding()
         #else: 
         self.enable_forwarding()
+
+    def downstream_ready(self):
+        super().downstream_ready()
+
+        actions = dict([(i,MinecraftProxyBridge.__dict__[i]) for i in dir(MinecraftProxyBridge) if "encode_" in i])
+        hmm_mapping = {}
+
+        for action in actions: 
+            self.logger.warn(self.downstream.protocol_version)
+            key = (self.downstream.protocol_version, 'play', 'downstream', action[7:])
+            val = packets.packet_idents[key].to_bytes(1,"little")
+            hmm_mapping[val] = action
+
+            #self.logger.warn(action)
+            #self.logger.warn(val)
+
+        self.action_model = HMMActionModel(actions, self, hmm_mapping, self.downstream_factory.hmm_file) 
+
     def downstream_disconnected(self, reason=None):
         self.downstream.factory.num_client_encoders = self.downstream.factory.num_client_encoders - 1
         """Each client must release its id"""
@@ -282,8 +217,10 @@ class MinecraftProxyFactory(DownstreamFactory):
     def __init__(self,  
                  downstream_encoder_actions=None, 
                  upstream_decoder_actions=None,  
-                 c_p_queue = None, s_p_queue = None):
+                 c_p_queue = None, s_p_queue = None, 
+                 encoder_weights=None, hmm_file=None):
 
+        super(MinecraftProxyFactory, self).__init__()
         try:
             """Handles decoding messages from client"""
             for action, fmt in upstream_decoder_actions.items():
@@ -299,6 +236,7 @@ class MinecraftProxyFactory(DownstreamFactory):
             #    create_dropper_function(MinecraftProxyBridge, "downstream_", action, fmt, "bridge")
 
             """This one controls which packets are encoded and sent to the server"""
+
             for action, fmt in downstream_encoder_actions.items():
                 create_encoder_function(MinecraftProxyBridge, action, fmt)
 
@@ -308,13 +246,15 @@ class MinecraftProxyFactory(DownstreamFactory):
 
         self.receiving_packet_queue = s_p_queue
         self.forwarding_packet_queue = c_p_queue
-        super(MinecraftProxyFactory, self).__init__()
+
+        self.encoder_weights = encoder_weights
+        self.hmm_file = hmm_file 
 
     def assign_id(self):
         """
-        ID zero is the only proxy that can/send receive
+        Each Proxy encoder spwaned by the ProxyEncoder Factory needs an id. Right now id zero is the only proxy that can/send receive as a PT.
         
-        Multiclients will need to be added later
+        TODO Multiclient PT support will need to be added later. 
         """
         num_ids = len(self.ids)
         i = 0
@@ -329,23 +269,7 @@ class MinecraftProxyFactory(DownstreamFactory):
            self.ids[i] = i 
         return i
 
-    def connectionMade(self):
-        self.transport.setTcpNoDelay(True)
+    def connection_made(self):
+        self.transport.setTcpNoDelay(True) #This option is used by most online games including Minecraft (versions 1.8.1+)
         self.num_client_encoders = num_client_encoders + 1
         return super().connection_made()
-
-    def sync_buff(self, oldbuff):
-        """
-        Each Downstream must send the same data for enemy movement packets
-        from the global buffer in order for the game sessions to be
-        authentic.
-        """
-        if(not self.forwarding_packet_queue.empty() ):
-            if(self.num_client_encoders == self.num_waiting_encoders or len(oldbuff) < 1):
-                self.num_waiting_encoders = 0
-                data = self.forwarding_packet_queue.get()
-                if(data != None):
-                    self.client_bound_buff = bytearray(data)
-            else:
-                self.num_waiting_encoders = self.num_waiting_encoders + 1
-        return self.client_bound_buff

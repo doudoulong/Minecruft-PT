@@ -1,138 +1,33 @@
 {
-    "teleport_confirm": [
-        "varint"
-    ],
-    "chat_message": [
-        "string"
-    ],
-    "client_status": [
-        "varint"
-    ],
-    "client_settings": [
-        "string",
-        "b",
-        "varint",
-        "?",
-        "B",
-        "varint"
-    ],
-    "confirm_transaction": [
-        "b",
-        "h",
-        "?"
-    ],
-    "enchant_item": [
-        "b",
-        "b"
-    ],
-    "click_window": [
-        "B",
-        "h",
-        "b",
-        "h",
-        "b",
-        "slot"
-    ],
-    "close_window": [
-        "B"
-    ],
-    "plugin_message": [
-        "string",
-        "restBuffer"
-    ],
-    "keep_alive": [
-        "q"
-    ],
-    "player": [
-        "?"
-    ],
-    "player_position": [
-        "d",
-        "d",
-        "d",
-        "?"
-    ],
-    "player_position_and_look": [
-        "d",
-        "d",
-        "d",
+"player_look": [
         "f",
         "f",
         "?"
     ],
-    "player_look": [
+"player_position": [
+        "ddd",
+        "?"
+    ],
+"player_position_and_look": [
+        "ddd",
         "f",
         "f",
         "?"
     ],
-    "vehicle_move": [
-        "d",
-        "d",
-        "d",
-        "f",
-        "f"
-    ],
-    "steer_boat": [
-        "?",
-        "?"
-    ],
-    "craft_recipe_request": [
-        "b",
-        "varint",
-        "?"
-    ],
-    "player_abilities": [
-        "b",
-        "f",
-        "f"
-    ],
-    "player_digging": [
-        "b",
-        "position",
-        "b"
-    ],
-    "entity_action": [
-        "varint",
-        "varint",
-        "varint"
-    ],
-    "steer_vehicle": [
+"steer_vehicle": [
         "f",
         "f",
         "B"
     ],
-    "resource_pack_status": [
-        "varint"
-    ],
-    "held_item_change": [
-        "h"
-    ],
-    "creative_inventory_action": [
+"steer_boat": [
+        "?",
+        "?"
+    ], 
+"creative_inventory_action": [
         "h",
         "slot"
     ],
-    "update_sign": [
-        "position",
-        "string",
-        "string",
-        "string",
-        "string"
-    ],
-    "animation": [
-        "varint"
-    ],
-    "spectate": [
-        "UUID"
-    ],
-    "player_block_placement": [
-        "position",
-        "varint",
-        "varint",
-        "f",
-        "f",
-        "f"
-    ],
-    "use_item": [
-        "varint"
+"animation": [
+        "varint_bit"
     ]
 }

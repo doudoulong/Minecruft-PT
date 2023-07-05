@@ -42,20 +42,26 @@ $ chmod +x install/setup_bridge.sh
 $ sudo utils/iptables_prestart
 ```
 
-4. Start the Minecraft game server docker by running
+4. (Optional)Enable Encryption Mode for Minecraft game server
+```
+$ cd ~/Minecraft-PT/Minecruft/configs/minecraft_server_conf
+Add `enable-encryption=true` to the file "server.properities".
+```
+
+
+5. Start the Minecraft game server docker by running
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f socks-test.yml up mserver
 ```
 
-5. To start the server proxy docker, you need to obtain the Minecraft server docker's IP by running
+6. To start the server proxy docker, you need to obtain the Minecraft server docker's IP by running
 ```
 $ sudo docker inspect docker_default | grep -A "Gateway" 
+Replace the IP address in line 19 (172.17.0.1) of file "socks-test.yml" with the output of the previous command and then save the file.
 ```
 
-Replace the IP address in line 19 (172.17.0.1) of file "socks-test.yml" with the output of the previous command and then save the file.
-
-6. Start the proxy docker by running one of the following commands, depending on the service: 
+7. Start the proxy docker by running one of the following commands, depending on the service: 
 * Web traffic tunneling
 ```
 $sudo docker-compose -f socks-test.yml up --build testproxy sshproxy
@@ -91,8 +97,8 @@ Replace the IP address in the last line (127.0.0.1) of file "socks-test.yml" wit
 ```
 $ cd ~/Minecruft-PT/Minecruft/docker
 $ sudo docker-compose -f socks-test.yml up --build testclient
-```
 *Hint: you can run proxy client and server at same machine for testing.
+```
 
 ### Web Traffic Tunneling
 Start Firefox, go to 'Settings --> Network Settings --> Mannual proxy configuration' and enter the following 

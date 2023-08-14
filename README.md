@@ -42,10 +42,17 @@ $ chmod +x install/setup_bridge.sh
 $ sudo utils/iptables_prestart
 ```
 
-4. (Optional)Enable Encryption Mode for Minecraft game server
+4. (Optional)Enable Encryption Mode / Online Mode for Minecraft game server
 ```
+Enable Encryption mode:
 $ cd ~/Minecraft-PT/Minecruft/configs/minecraft_server_conf
-Add `enable-encryption=true` to the file "server.properities".
+Add/Modify `enable-encryption=true` to the file "server.properities".
+
+Enable Online mode(NOT Recommended)
+$ cd ~/Minecraft-PT/Minecruft/configs/minecraft_server_conf
+Change `online-mode=false` to `online-mode=true` in the file "server.properities".
+This will block all clients that cannot finish authorization with Microsoft Auth Server.
+Don't enable this if you are not familiar with Minecraft game.
 ```
 
 
@@ -68,6 +75,26 @@ $sudo docker-compose -f socks-test.yml up --build testproxy sshproxy
 ```
 
 The Minecruft-PT server should be ready for use.
+
+8. (Optional) Set up Whitelist on proxy server
+```
+It optional to enable firewall to allow specific IP addresses to access server. Here we take UFW as example:
+
+See if Ubuntu Firewall is active:
+$ sudo ufw status
+
+If it's inactive, enable it:
+$ sudo ufw enable
+
+Add rule to allow specific IP's connection:
+$sudo ufw allow from 123.123.123.123 proto tcp to any port 25566
+
+To delete rule:
+$sudo ufw status numbered           //list the index for rules  
+$sudo ufw delete 1                  //delete the rule with index 1
+
+See https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands for UFW basic commands for reference.
+```
 
 
 ## Minecruft-PT Client Setup

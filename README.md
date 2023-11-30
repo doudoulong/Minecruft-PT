@@ -15,6 +15,9 @@ Minecruft-PT has been tested on the following systems:
 
 
 ## Software Requirements
+
+*All commands are in command line interface.
+
 1. Install by running
 ```bash
 $ sudo apt install docker docker-compose -y

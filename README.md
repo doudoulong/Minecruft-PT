@@ -1,4 +1,7 @@
 # Minecruft-PT
+
+# <img src="https://github.com/doudoulong/Minecruft-PT/blob/main/Minecruft/media/Minecruft.png" width="200"> 
+
 A pluggable transport (PT) that tunnels user's traffic through Minecraft video game sessions. We would recommend users refer to "Introduction to Minecruft" for detailed information about Minecruft. The schematic diagram below should give you a general idea as to how Minecruft-PT works.
 
 ![image](https://user-images.githubusercontent.com/4751354/168675516-458acaf6-7fd1-4a1e-adc5-11ad2df7f785.png)
